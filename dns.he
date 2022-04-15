@@ -1,0 +1,201 @@
+#!/bin/bash
+
+
+
+# ====================================================================================
+
+varCredLogin="xxxx"
+varCredPassword="xxxx"
+varZoneId=000000
+
+varPathCookies="/tmp/he-cookies"
+varPathCurlOutput="/tmp/he-output"
+varPathDomainList="$(pwd)/parsed-domain-list.txt"
+varCurlTimeout=5
+varUserAgent="User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36"
+
+varLightBlue="\033[1;34m"
+varLightPurple="\033[1;35m"
+varLightCyan="\033[1;36m"
+varBoldWhite="\033[1;37m"
+varLightYellow="\033[1;33m"
+varNoColor="\033[0m"
+
+
+
+# ====================================================================================
+
+function funcPrint(){
+
+    varPrintMode=$1
+    varPrintString=$2
+
+    if [[ $varPrintMode == "tit" ]]; then
+        printf "\n\n\t\t${varLightPurple} %s ${varNoColor}" "$varPrintString"
+
+    elif [[ $varPrintMode == "head" ]]; then
+        printf "\n\n [+] ${varLightCyan}%s ${varNoColor}\n" "$varPrintString"
+
+    elif [[ $varPrintMode == "list" ]]; then
+        printf "%-50s\n" "  |--[+] $varPrintString"
+
+    fi
+}
+
+function funcCurl(){
+
+    varReqMode="$1"
+    varDataParam="$2"
+    varEndpoint="$3"
+
+    curl \
+        -sLX "$varReqMode" -m "$varCurlTimeout" -H "$varUserAgent" --cookie "$varPathCookies" --cookie-jar "$varPathCookies" -o "$varPathCurlOutput" \
+        --data "$varDataParam" \
+        "https://dns.he.net$varEndpoint"
+}
+
+function funcLogin(){
+
+    funcPrint head "Login"
+
+        funcPrint list "Get init cookie"
+            funcCurl "GET"
+
+        funcPrint list "Login with given params"
+            funcCurl "POST" "email=$varCredLogin&pass=$varCredPassword&submit=Login%21"
+
+        funcPrint list "Done"
+}
+
+function funcHelpPage(){
+
+    clear
+    varScriptPath="$(echo $0 | awk -F/ '{print $NF}')"
+    funcPrint tit "DNS Provisioning | berrabe   [ HELP PAGE ]"
+
+        funcPrint head "Make new record"
+            funcPrint list "TEMPLATE : $varScriptPath new <DNS record type = [A|CNAME]> <domain name> <domain content>"
+            funcPrint list "EXAMPLE  : $varScriptPath new A example.com 1.1.1.1"
+
+        funcPrint head "List domain"
+            funcPrint list "TEMPLATE : $varScriptPath list <html file>"
+            funcPrint list "EXAMPLE  : $varScriptPath list my-domain-list.html"
+
+        funcPrint head "Update existing record"
+            funcPrint list "TEMPLATE : $varScriptPath update <dns id> <DNS record type = [A|CNAME]> <domain name> <domain content>"
+            funcPrint list "EXAMPLE  : $varScriptPath update 4291644419 A example.com 1.1.1.1"
+
+        funcPrint head "Delete domain"
+            funcPrint list "TEMPLATE : $varScriptPath delete <dns id>"
+            funcPrint list "EXAMPLE  : $varScriptPath delete 4291644419"
+
+        funcPrint head "INFO"
+            funcPrint list "LIST        : you need to prepare the html file manually via inspect element before using list feature"
+            funcPrint list "FEATURE     : you must now the dns / record id before using update / delete, use list feature first "
+}
+
+
+
+# ====================================================================================s
+
+funcPrint tit "DNS Provisioning | berrabe"
+
+case "$1" in
+
+  n|new)
+
+    [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] && funcHelpPage && exit 2
+    varDNSType="$2"
+    varDNSName="$3"
+    varDNSContent="$4"
+    funcLogin
+
+    funcPrint head "Process" 
+        funcPrint list "Make new record: $varDNSName($varDNSType) -> $varDNSContent"    
+            funcCurl \
+                POST \
+                    "account=\
+                    &menu=edit_zone\
+                    &Type=$varDNSType\
+                    &hosted_dns_zoneid=$varZoneId\
+                    &hosted_dns_recordid=\
+                    &hosted_dns_editzone=1\
+                    &Priority=\
+                    &Name=$varDNSName\
+                    &Content=$varDNSContent\
+                    &TTL=172800\
+                    &hosted_dns_editrecord=Submit" \
+                        "/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&hosted_dns_editzone"
+
+        funcPrint list "Done"    
+    ;;
+
+
+
+  u|update)
+
+    [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] && funcHelpPage && exit 2
+    varDNSId="$2"
+    varDNSType="$3"
+    varDNSName="$4"
+    varDNSContent="$5"
+    funcLogin
+
+    funcPrint head "Process" 
+        funcPrint list "Update Existing record: [ $varDNSId ] $varDNSName($varDNSType) -> $varDNSContent"    
+                        
+            curl -sLX POST -m "$varCurlTimeout" -H "$varUserAgent" --cookie "$varPathCookies" --cookie-jar "$varPathCookies" -o "$varPathCurlOutput" \
+                -H "Referer: https://dns.he.net/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&hosted_dns_editzone" \
+                    --data "account=&menu=edit_zone&Type=$varDNSType&hosted_dns_zoneid=$varZoneId&hosted_dns_recordid=$varDNSId&hosted_dns_editzone=1&Priority=-&Name=$varDNSName&Content=$varDNSContent&TTL=86400&hosted_dns_editrecord=Update" \
+                        "https://dns.he.net/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&"
+
+        funcPrint list "Done"    
+    ;;
+
+
+
+  d|delete)
+    [ -z "$2" ] && funcHelpPage && exit 2
+    varDNSId="$2"
+    funcLogin
+
+    funcPrint head "Process"
+        funcPrint list "Delete DNS record: $varDNSId"
+
+            curl -sLX POST -m "$varCurlTimeout" -H "$varUserAgent" --cookie "$varPathCookies" --cookie-jar "$varPathCookies" -o "$varPathCurlOutput" \
+                -H "Referer: https://dns.he.net/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&hosted_dns_editzone" \
+                    --data "hosted_dns_zoneid=$varZoneId&hosted_dns_recordid=$varDNSId&menu=edit_zone&hosted_dns_delconfirm=delete&hosted_dns_editzone=1&hosted_dns_delrecord=1" \
+                        "https://dns.he.net/index.cgi"
+
+        funcPrint list "Done"    
+    ;;
+
+
+
+  l|list)
+    [ -z "$2" ] && funcHelpPage && exit 2
+    varHTMLFile="$2"
+
+    funcPrint head "Process"
+        funcPrint list "Checking file"
+            [ ! -f "$varHTMLFile" ] && funcPrint list "ERR | File not found" && exit 2
+
+        funcPrint list "Parsing"
+            awk -F"[,|']" \
+                'BEGIN { \
+                    printf "%-15s %-10s %s\n","DNS ID","TYPE","DOMAIN NAME"; \
+                    for(i=1; i<=40; i++) {printf "="} \
+                } /dns_delete/{gsub("<.*\\(|\\).*>|^ +",""); \
+                printf "%-15s %-10s %s\n",$2, $8, $5}' \
+                $varHTMLFile > "$varPathDomainList"
+
+        funcPrint list "Output parsed file to: $varPathDomainList"
+        funcPrint list "Done"    
+    ;;
+
+  *)
+    funcHelpPage
+    exit 1
+    ;;
+esac
+
