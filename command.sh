@@ -13,7 +13,7 @@ awk '/[0-9a-z]{20}\./{ \
     }' parsed-domain-list.txt \
         | xargs -IX -n1 \
             bash -c 'clear \
-                && dns.he u X'
+                && dns.he update X'
 
 
 # Delete domain that have 20 char long
@@ -27,4 +27,4 @@ awk '/[0-9a-z]{20}\./{print $1}' parsed-domain-list.txt \
 awk '/[0-9a-z]{20}\./{print $NF}' parsed-domain-list.txt \
 | xargs -n1 \
     dig +noall +answer \
-        nl
+        | nl -s')  '
