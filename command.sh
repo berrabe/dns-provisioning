@@ -4,7 +4,7 @@
 seq 3 \
 | xargs -IX -n1 \
     bash -c 'clear \
-        && ./dns.he new A "$(tr -dc a-z0-9 </dev/urandom | head -c 20)" 1.1.1.1'
+        && dns.he new A "$(tr -dc a-z0-9 </dev/urandom | head -c 20)" 1.1.1.1'
 
 
 # Update domain name that have 20 char long and A record type pointing to new A IP 1.2.3.4
@@ -20,7 +20,7 @@ awk '/[0-9a-z]{20}\./{ \
 awk '/[0-9a-z]{20}\./{print $1}' parsed-domain-list.txt \
 | xargs -IX -n1 \
     bash -c 'clear \
-        && ./dns.he delete X'
+        && dns.he delete X'
 
 
 # Check domain resolve that have 20 char long w/ dig
