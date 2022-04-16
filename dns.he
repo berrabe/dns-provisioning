@@ -188,13 +188,25 @@ case "$1" in
                         "https://dns.he.net/index.cgi"
 
         funcPrint list "Parsing"
-            awk -F"[,|']" \
-                'BEGIN { \
-                    printf "%-15s %-10s %s\n","DNS ID","TYPE","DOMAIN NAME"; \
-                    for(i=1; i<=40; i++) {printf "="} \
-                } /dns_delete/{gsub("<.*\\(|\\).*>|^ +",""); \
-                printf "%-15s %-10s %s\n",$2, $8, $5}' \
-                "$varPathCurlOutput" > "$varPathDomainList"
+            varParseDomain=$(awk -F"[,|']" \
+                            '/dns_delete.*onclick/{gsub("<.*\\(|\\).*>|^ +",""); \
+                            printf "%-15s %-50s %-10s\n",$2, $5, $8}' \
+                                "$varPathCurlOutput")
+            varParseIP=$(awk -F"*" \
+                        '/data="[0-9a-z.]+"/{ gsub("<|>|\"","*"); printf "%-20s %s\n", $17, $5}' \
+                            "$varPathCurlOutput")
+
+
+        funcPrint list "Generating"
+            truncate -s0 "$varPathDomainList"
+
+            printf "%-15s %-50s %-9s %-20s %s\n" "DNS ID" "DOMAIN" "TYPE" "RECORD" "TTL" >> "$varPathDomainList"
+            for (( i = 0; i < 105; i++ )); do printf "="; done >> "$varPathDomainList" && echo >> "$varPathDomainList"
+
+            for (( i = 1; i < $(echo "$varParseDomain" | wc -l); i++ )); do
+                echo -n "$varParseDomain" | awk 'NR=='"$i"'{printf "%s",$0}' >> "$varPathDomainList"
+                echo -n "$varParseIP" | awk "NR==$i" >> "$varPathDomainList"
+            done
 
         funcPrint list "Output parsed file to: $varPathDomainList"
         funcPrint list "Done"
