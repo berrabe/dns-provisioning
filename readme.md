@@ -32,9 +32,3 @@ and I want to thank burpsuite, you really helped me, because you know ..... they
 </p>
 
 <br/><br/>
-
-<p align="center">
-  <img src="docs/2.png">
-</p>
-
-<br/><br/>
