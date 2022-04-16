@@ -6,7 +6,7 @@
 
 varCredLogin="xxxx"
 varCredPassword="xxxx"
-varZoneId=000000
+varZoneId=00000
 varDNSTTL=3600
 
 varPathCookies="/tmp/he-cookies"
@@ -65,7 +65,12 @@ function funcLogin(){
         funcPrint list "Login with given params"
             funcCurl "POST" "email=$varCredLogin&pass=$varCredPassword&submit=Login%21"
 
-        funcPrint list "Done"
+        funcPrint list "Zone ID"
+            awk '\
+                /zoneid|pencil.*name/{\
+                a+=1; gsub("alt.*name=|\"|onclick.*zoneid=|&menu.*$",""); \
+                if(a%2==0) {printf "[ %s ]\n",$NF} else {printf "%-5s |--[+] %-30s"," ",$NF}}' \
+                    "$varPathCurlOutput"
 }
 
 function funcHelpPage(){
@@ -91,8 +96,7 @@ function funcHelpPage(){
             funcPrint list "EXAMPLE  : $varScriptPath delete 4291644419"
 
         funcPrint head "INFO"
-            funcPrint list "ZONEID   : you can look your own zone id in URL when you logged into dns.he.net"
-            funcPrint list "FEATURE  : you must now the dns / record id before using update / delete, use list feature first"
+            funcPrint list "FEATURE  : you must know the dns id before using update / delete, use list feature first"
 }
 
 
