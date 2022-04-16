@@ -7,6 +7,7 @@
 varCredLogin="xxxx"
 varCredPassword="xxxx"
 varZoneId=000000
+varDNSTTL=3600
 
 varPathCookies="/tmp/he-cookies"
 varPathCurlOutput="/tmp/he-output"
@@ -123,7 +124,7 @@ case "$1" in
                     &Priority=\
                     &Name=$varDNSName\
                     &Content=$varDNSContent\
-                    &TTL=172800\
+                    &TTL=$varDNSTTL\
                     &hosted_dns_editrecord=Submit" \
                         "/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&hosted_dns_editzone"
 
@@ -146,7 +147,7 @@ case "$1" in
                         
             curl -sLX POST -m "$varCurlTimeout" -H "$varUserAgent" --cookie "$varPathCookies" --cookie-jar "$varPathCookies" -o "$varPathCurlOutput" \
                 -H "Referer: https://dns.he.net/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&hosted_dns_editzone" \
-                    --data "account=&menu=edit_zone&Type=$varDNSType&hosted_dns_zoneid=$varZoneId&hosted_dns_recordid=$varDNSId&hosted_dns_editzone=1&Priority=-&Name=$varDNSName&Content=$varDNSContent&TTL=86400&hosted_dns_editrecord=Update" \
+                    --data "account=&menu=edit_zone&Type=$varDNSType&hosted_dns_zoneid=$varZoneId&hosted_dns_recordid=$varDNSId&hosted_dns_editzone=1&Priority=-&Name=$varDNSName&Content=$varDNSContent&TTL=$varDNSTTL&hosted_dns_editrecord=Update" \
                         "https://dns.he.net/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&"
 
         funcPrint list "Done"    
