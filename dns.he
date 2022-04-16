@@ -79,8 +79,8 @@ function funcHelpPage(){
             funcPrint list "EXAMPLE  : $varScriptPath new A example.com 1.1.1.1"
 
         funcPrint head "List domain"
-            funcPrint list "TEMPLATE : $varScriptPath list <html file>"
-            funcPrint list "EXAMPLE  : $varScriptPath list my-domain-list.html"
+            funcPrint list "TEMPLATE : $varScriptPath list"
+            funcPrint list "EXAMPLE  : $varScriptPath list"
 
         funcPrint head "Update existing record"
             funcPrint list "TEMPLATE : $varScriptPath update <dns id> <DNS record type = [A|CNAME]> <domain name> <domain content>"
@@ -91,8 +91,8 @@ function funcHelpPage(){
             funcPrint list "EXAMPLE  : $varScriptPath delete 4291644419"
 
         funcPrint head "INFO"
-            funcPrint list "LIST        : you need to prepare the html file manually via inspect element before using list feature"
-            funcPrint list "FEATURE     : you must now the dns / record id before using update / delete, use list feature first "
+            funcPrint list "ZONEID   : you can look your own zone id in URL when you logged into dns.he.net"
+            funcPrint list "FEATURE  : you must now the dns / record id before using update / delete, use list feature first"
 }
 
 
@@ -174,12 +174,14 @@ case "$1" in
 
 
   l|list)
-    [ -z "$2" ] && funcHelpPage && exit 2
-    varHTMLFile="$2"
 
+    funcLogin
     funcPrint head "Process"
-        funcPrint list "Checking file"
-            [ ! -f "$varHTMLFile" ] && funcPrint list "ERR | File not found" && exit 2
+        funcPrint list "Request Page"
+            curl -sLX POST -m "$varCurlTimeout" -H "$varUserAgent" --cookie "$varPathCookies" --cookie-jar "$varPathCookies" -o "$varPathCurlOutput" \
+                -H "Referer: https://dns.he.net/?hosted_dns_zoneid=$varZoneId&menu=edit_zone&hosted_dns_editzone" \
+                    --data "hosted_dns_zoneid=$varZoneId&hosted_dns_recordid=0&menu=edit_zone&hosted_dns_delconfirm=delete&hosted_dns_editzone=1&hosted_dns_delrecord=1" \
+                        "https://dns.he.net/index.cgi"
 
         funcPrint list "Parsing"
             awk -F"[,|']" \
@@ -188,11 +190,12 @@ case "$1" in
                     for(i=1; i<=40; i++) {printf "="} \
                 } /dns_delete/{gsub("<.*\\(|\\).*>|^ +",""); \
                 printf "%-15s %-10s %s\n",$2, $8, $5}' \
-                $varHTMLFile > "$varPathDomainList"
+                "$varPathCurlOutput" > "$varPathDomainList"
 
         funcPrint list "Output parsed file to: $varPathDomainList"
-        funcPrint list "Done"    
+        funcPrint list "Done"
     ;;
+
 
   *)
     funcHelpPage
