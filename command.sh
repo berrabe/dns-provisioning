@@ -9,7 +9,7 @@ seq 3 \
 
 # Update domain name that have 20 char long and A record type pointing to new A IP 1.2.3.4
 awk '/[0-9a-z]{20}\./{ \
-    for (i=1; i<=NF; i++) {printf "%s ",$i} print "1.2.3.4\n" \
+    printf "%s %s %s %s", $1, $3, $2, "1.2.3.4\n" \
     }' parsed-domain-list.txt \
         | xargs -IX -n1 \
             bash -c 'clear \
@@ -24,7 +24,7 @@ awk '/[0-9a-z]{20}\./{print $1}' parsed-domain-list.txt \
 
 
 # Check domain resolve that have 20 char long w/ dig
-awk '/[0-9a-z]{20}\./{print $NF}' parsed-domain-list.txt \
+awk '/[0-9a-z]{20}\./{print $2}' parsed-domain-list.txt \
 | xargs -n1 \
     dig +noall +answer \
         | nl -s')  '
