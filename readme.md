@@ -14,7 +14,7 @@ and I want to thank burpsuite, you really helped me, because you know ..... they
 - just ... you know, download ... and make sure `/usr/local/bin` already on your `$PATH`
 
 ```sh
-> curl -sLD - https://raw.githubusercontent.com/berrabe/dns-provisioning/master/dns.he -o /usr/local/bin
+> curl -sLD - https://raw.githubusercontent.com/berrabe/dns-provisioning/master/dns.he -o /usr/local/bin/dns.he
 > chmod +x /usr/local/bin/dns.he 
 > dns.he
 ```
